@@ -72,7 +72,7 @@ func (r *Subversion) Fetch() (err error) {
 		return
 	}
 	agent := ssh.Agent{}
-	err = agent.Add(id)
+	err = agent.Add(id, url.Host)
 	if err != nil {
 		return
 	}

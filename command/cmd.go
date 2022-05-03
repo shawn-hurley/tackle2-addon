@@ -25,6 +25,7 @@ type Command struct {
 	Options Options
 	Path    string
 	Dir     string
+	Output  []byte
 }
 
 //
@@ -38,7 +39,7 @@ func (r *Command) Run() (err error) {
 		strings.Join(r.Options, " "))
 	cmd := exec.Command(r.Path, r.Options...)
 	cmd.Dir = r.Dir
-	b, err := cmd.CombinedOutput()
+	r.Output, err = cmd.CombinedOutput()
 	if err != nil {
 		addon.Activity("[CMD] failed: %s.", err.Error())
 	} else {
@@ -49,7 +50,7 @@ func (r *Command) Run() (err error) {
 		err = &SoftError{
 			Reason: fmt.Sprintf("[CMD] %s failed: %s.", r.Path, err.Error()),
 		}
-		output := string(b)
+		output := string(r.Output)
 		for _, line := range strings.Split(output, "\n") {
 			addon.Activity(
 				"> %s",

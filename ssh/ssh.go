@@ -40,8 +40,9 @@ func (r *Agent) Start() (err error) {
 	cmd.Options.Add("-a", socket)
 	err = cmd.Run()
 	if err != nil {
-		_ = os.Setenv("SSH_AUTH_SOCK", socket)
+		return
 	}
+	_ = os.Setenv("SSH_AUTH_SOCK", socket)
 	err = nas.MkDir(SSHDir, 0700)
 	if err != nil {
 		return
@@ -54,25 +55,29 @@ func (r *Agent) Start() (err error) {
 
 //
 // Add ssh key.
-func (r *Agent) Add(id *api.Identity) (err error) {
+func (r *Agent) Add(id *api.Identity, host string) (err error) {
 	if id.Key == "" {
 		return
 	}
 	addon.Activity("[SSH] Adding key: %s", id.Name)
-	keyPath := pathlib.Join(
+	suffix := fmt.Sprintf("id_%d", id.ID)
+	path := pathlib.Join(
 		SSHDir,
-		"id_"+id.Name)
-	_, err = os.Stat(keyPath)
+		suffix)
+	_, err = os.Stat(path)
 	if !errors.Is(err, os.ErrNotExist) {
 		err = liberr.Wrap(os.ErrExist)
 		return
 	}
-	f, err := os.Create(keyPath)
+	f, err := os.OpenFile(
+		path,
+		os.O_RDWR|os.O_CREATE,
+		0600)
 	if err != nil {
 		err = liberr.Wrap(
 			err,
 			"path",
-			keyPath)
+			path)
 		return
 	}
 	_, err = f.Write([]byte(id.Key))
@@ -80,27 +85,58 @@ func (r *Agent) Add(id *api.Identity) (err error) {
 		err = liberr.Wrap(
 			err,
 			"path",
-			keyPath)
+			path)
 	}
 	_ = f.Close()
 	if id.Password == "" {
 		return
 	}
-	err = r.writeAskScript(id)
+	err = r.writeAsk(id)
 	if err != nil {
 		return
 	}
 	cmd := command.Command{Path: "/usr/bin/ssh-add"}
-	cmd.Options.Add(keyPath)
+	cmd.Options.Add(path)
 	err = cmd.Run()
+	if err != nil {
+		return
+	}
+	cmd = command.Command{Path: "/usr/bin/ssh-keyscan"}
+	cmd.Options.Add(host)
+	err = cmd.Run()
+	if err != nil {
+		return
+	}
+	known := "/etc/ssh/ssh_known_hosts"
+	f, err = os.OpenFile(
+		known, os.O_RDWR|os.O_APPEND|os.O_CREATE,
+		0600)
+	if err != nil {
+		err = liberr.Wrap(
+			err,
+			"path",
+			path)
+		return
+	}
+	_, err = f.Write(cmd.Output)
+	if err != nil {
+		err = liberr.Wrap(
+			err,
+			"path",
+			path)
+	}
+	_ = f.Close()
 	return
 }
 
 //
-// writeAskScript writes script that returns the key password.
-func (r *Agent) writeAskScript(id *api.Identity) (err error) {
+// writeAsk writes script that returns the key password.
+func (r *Agent) writeAsk(id *api.Identity) (err error) {
 	path := "/tmp/ask.sh"
-	f, err := os.Create(path)
+	f, err := os.OpenFile(
+		path,
+		os.O_RDWR|os.O_CREATE,
+		0700)
 	if err != nil {
 		err = liberr.Wrap(
 			err,
@@ -109,7 +145,7 @@ func (r *Agent) writeAskScript(id *api.Identity) (err error) {
 		return
 	}
 	script := fmt.Sprintf(
-		"#!/bin/sh\necho %s",
+		"#!/bin/sh\necho '%s'",
 		id.Password)
 	_, err = f.Write([]byte(script))
 	if err != nil {
@@ -119,6 +155,7 @@ func (r *Agent) writeAskScript(id *api.Identity) (err error) {
 			path)
 	}
 	_ = os.Setenv("SSH_ASKPASS", path)
+	_ = os.Setenv("DISPLAY", "1")
 	_ = f.Close()
 	return
 }

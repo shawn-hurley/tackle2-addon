@@ -11,6 +11,7 @@ import (
 	urllib "net/url"
 	"os"
 	pathlib "path"
+	"strings"
 )
 
 //
@@ -22,9 +23,9 @@ type Git struct {
 //
 // Validate settings.
 func (r *Git) Validate() (err error) {
-	u, err := urllib.Parse(r.Application.Repository.URL)
+	u := GitURL{}
+	err = u.With(r.Application.Repository.URL)
 	if err != nil {
-		err = &SoftError{Reason: err.Error()}
 		return
 	}
 	insecure, err := addon.Setting.Bool("git.insecure.enabled")
@@ -70,7 +71,7 @@ func (r *Git) Fetch() (err error) {
 		return
 	}
 	agent := ssh.Agent{}
-	err = agent.Add(id)
+	err = agent.Add(id, url.Host)
 	if err != nil {
 		return
 	}
@@ -86,8 +87,9 @@ func (r *Git) Fetch() (err error) {
 
 //
 // URL returns the parsed URL.
-func (r *Git) URL() (u *urllib.URL) {
-	u, _ = urllib.Parse(r.Application.Repository.URL)
+func (r *Git) URL() (u GitURL) {
+	u = GitURL{}
+	_ = u.With(r.Application.Repository.URL)
 	return
 }
 
@@ -156,7 +158,6 @@ func (r *Git) writeCreds(id *api.Identity) (err error) {
 	}
 	url := r.URL()
 	for _, scheme := range []string{
-		url.Scheme,
 		"https",
 		"http",
 	} {
@@ -253,4 +254,47 @@ func (r *Git) checkout() (err error) {
 	cmd.Options.Add("checkout", branch)
 	err = cmd.Run()
 	return
+}
+
+//
+// GitURL git clone URL.
+type GitURL struct {
+	Raw string
+	Scheme string
+	Host string
+	Path string
+}
+
+//
+// With populates the URL.
+func (r *GitURL) With(u string) (err error) {
+	r.Raw = u
+	parsed, pErr := urllib.Parse(u)
+	if pErr == nil {
+		r.Scheme = parsed.Scheme
+		r.Host = parsed.Host
+		r.Path = parsed.Path
+		return
+	}
+	notValid := liberr.New("URL not valid.")
+	part := strings.Split(u, ":")
+	if len(part) != 2 {
+		err = notValid
+		return
+	}
+	r.Host = part[0]
+	r.Path = part[1]
+	part = strings.Split(r.Host, "@")
+	if len(part) != 2 {
+		err = notValid
+		return
+	}
+	r.Host = part[1]
+	return
+}
+
+//
+// String representation.
+func (r *GitURL) String() string {
+	return r.Raw
 }
