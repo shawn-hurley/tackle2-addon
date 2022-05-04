@@ -2,7 +2,13 @@
 kind: Addon
 apiVersion: tackle.konveyor.io/v1alpha1
 metadata:
-  name: test
+  name: admin
 spec:
-  image: quay.io/jortel/tackle-addon
-
+  image: quay.io/jortel/tackle2-addon-admin
+  mounts:
+    - claim: tackle-windup-addon-volume-claim
+      name: m2
+  resources:
+    requests:
+      cpu: 50m
+      memory: 50Mi

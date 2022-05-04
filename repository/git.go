@@ -259,10 +259,10 @@ func (r *Git) checkout() (err error) {
 //
 // GitURL git clone URL.
 type GitURL struct {
-	Raw string
+	Raw    string
 	Scheme string
-	Host string
-	Path string
+	Host   string
+	Path   string
 }
 
 //
