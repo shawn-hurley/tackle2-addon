@@ -27,7 +27,7 @@ mount:report
    "priority": 1,
    "addon": "admin",
    "data": {
-   "path": "m2"
+     "path": "m2"
    }
 }
 ```
