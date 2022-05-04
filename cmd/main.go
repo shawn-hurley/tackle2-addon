@@ -87,6 +87,7 @@ func mountClean() (err error) {
 			return
 		}
 	}
+	err = mountReport()
 	return
 }
 
