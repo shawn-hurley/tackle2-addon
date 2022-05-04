@@ -39,7 +39,7 @@ mount:clean
    "state": "Ready",
    "variant":"mount:clean",
    "priority": 1,
-   "policy": "Isolated",
+   "policy": "isolated",
    "addon": "admin",
    "data": {
      "path": "m2"
