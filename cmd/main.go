@@ -4,6 +4,7 @@ import (
 	"github.com/konveyor/tackle2-addon/command"
 	"github.com/konveyor/tackle2-addon/nas"
 	hub "github.com/konveyor/tackle2-hub/addon"
+	"github.com/konveyor/tackle2-hub/api"
 	"os"
 	pathlib "path"
 	"strings"
@@ -11,6 +12,10 @@ import (
 
 var (
 	addon = hub.Addon
+)
+
+const (
+	MountRoot = "/mnt/"
 )
 
 type SoftError = hub.SoftError
@@ -34,78 +39,89 @@ func main() {
 //
 // mountReport reports mount statistics.
 func mountReport() (err error) {
-	d := &MountInput{}
+	d := &Data{}
 	err = addon.DataWith(d)
 	if err != nil {
 		err = &SoftError{Reason: err.Error()}
 		return
 	}
-	if len(d.Mount) == 0 {
-		err = &SoftError{Reason: "Path required."}
+	if len(d.Volumes) == 0 {
 		return
 	}
-	cmd := command.Command{Path: "/usr/bin/df"}
-	cmd.Options.Add("-h")
-	cmd.Options.Addf(d.path())
-	err = cmd.Run()
-	if err != nil {
-		return
+	for _, id := range d.Volumes {
+		var v *api.Volume
+		v, err = addon.Volume.Get(id)
+		if err != nil {
+			return
+		}
+		path := MountRoot + v.Name
+		cmd := command.Command{Path: "/usr/bin/df"}
+		cmd.Options.Add("-h")
+		cmd.Options.Addf(path)
+		err = cmd.Run()
+		if err != nil {
+			return
+		}
+		output := string(cmd.Output)
+		output = strings.Split(output, "\n")[1]
+		part := strings.Fields(output)
+		v.Capacity = part[1]
+		v.Used = part[2]
+		err = addon.Volume.Update(v)
+		if err != nil {
+			return
+		}
+		addon.Activity("Volume (id=%d) %s updated.", v.ID, v.Name)
 	}
-	result := MountReport{}
-	output := string(cmd.Output)
-	output = strings.Split(output, "\n")[1]
-	part := strings.Fields(output)
-	result.Capacity = part[1]
-	result.Used = part[2]
-	addon.Result(result)
 	return
 }
 
 //
 // mountClean deletes the content of the mount.
+// Then triggers a mountReport to update the volume.
 func mountClean() (err error) {
-	d := &MountInput{}
+	d := &Data{}
 	err = addon.DataWith(d)
 	if err != nil {
 		err = &SoftError{Reason: err.Error()}
 		return
 	}
-	if len(d.Mount) == 0 {
-		err = &SoftError{Reason: "Mount name required."}
+	if len(d.Volumes) == 0 {
 		return
 	}
-	content, err := os.ReadDir(d.path())
-	if err != nil {
-		err = &SoftError{Reason: err.Error()}
-		return
-	}
-	for _, entry := range content {
-		p := pathlib.Join(d.path(), entry.Name())
-		err = nas.RmDir(p)
+	var entries []os.DirEntry
+	for _, id := range d.Volumes {
+		var v *api.Volume
+		v, err = addon.Volume.Get(id)
 		if err != nil {
-			err = &SoftError{Reason: err.Error()}
 			return
 		}
+		path := MountRoot + v.Name
+		entries, err = os.ReadDir(path)
+		if err != nil {
+			err = &SoftError{
+				Reason: err.Error(),
+			}
+			return
+		}
+		for _, entry := range entries {
+			p := pathlib.Join(path, entry.Name())
+			err = nas.RmDir(p)
+			if err != nil {
+				err = &SoftError{
+					Reason: err.Error(),
+				}
+				return
+			}
+		}
+		addon.Activity("Volume (id=%d) %s cleaned.", v.ID, v.Name)
 	}
 	err = mountReport()
 	return
 }
 
 //
-// MountInput data.
-type MountInput struct {
-	Mount string `json:"path"`
-}
-
-//
-// Mount path.
-func (r *MountInput) path() string {
-	return "/mnt/" + r.Mount
-}
-
-//
-// MountReport The df variant result.
-type MountReport struct {
-	Capacity string `json:"capacity,omitempty"`
-	Used     string `json:"used"`
+// Data input.
+type Data struct {
+	Volumes []uint `json:"volumes,omitempty"`
 }

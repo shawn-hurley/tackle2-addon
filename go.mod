@@ -15,3 +15,5 @@ require (
 	github.com/konveyor/controller v0.8.0
 	github.com/konveyor/tackle2-hub v0.0.0-20220504114809-65b74531abda
 )
+
+replace github.com/konveyor/tackle2-hub => github.com/jortel/tackle2-hub v0.0.0-20220507143131-c3e61182d4ef
