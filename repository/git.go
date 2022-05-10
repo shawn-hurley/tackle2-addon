@@ -225,8 +225,7 @@ func (r *Git) proxy() (proxy string, err error) {
 			id.Password)
 	}
 	proxy = fmt.Sprintf(
-		"%s://%s%s",
-		p.Kind,
+		"http://%s%s",
 		auth,
 		p.Host)
 	if p.Port > 0 {

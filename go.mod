@@ -13,7 +13,5 @@ replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-
 require (
 	github.com/clbanning/mxj v1.8.4
 	github.com/konveyor/controller v0.8.0
-	github.com/konveyor/tackle2-hub v0.0.0-20220504114809-65b74531abda
+	github.com/konveyor/tackle2-hub v0.0.0-20220510102650-542558f3f9cb
 )
-
-replace github.com/konveyor/tackle2-hub => github.com/jortel/tackle2-hub v0.0.0-20220507143131-c3e61182d4ef
