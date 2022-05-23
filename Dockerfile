@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:1.16.7 as builder
+FROM registry.access.redhat.com/ubi8/go-toolset:1.16.12 as builder
 ENV GOPATH=$APP_ROOT
 COPY --chown=1001:0 . .
 RUN make cmd
