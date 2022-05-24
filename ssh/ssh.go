@@ -10,6 +10,7 @@ import (
 	"github.com/konveyor/tackle2-hub/api"
 	"os"
 	pathlib "path"
+	"strings"
 )
 
 var (
@@ -80,7 +81,7 @@ func (r *Agent) Add(id *api.Identity, host string) (err error) {
 			path)
 		return
 	}
-	_, err = f.Write([]byte(id.Key))
+	_, err = f.Write([]byte(r.format(id.Key)))
 	if err != nil {
 		err = liberr.Wrap(
 			err,
@@ -126,6 +127,15 @@ func (r *Agent) Add(id *api.Identity, host string) (err error) {
 			path)
 	}
 	_ = f.Close()
+	return
+}
+
+//
+// Ensure key formatting.
+func (r *Agent) format(in string) (out string) {
+	if in != "" {
+		out = strings.TrimSpace(in) + "\n"
+	}
 	return
 }
 
