@@ -89,9 +89,6 @@ func (r *Agent) Add(id *api.Identity, host string) (err error) {
 			path)
 	}
 	_ = f.Close()
-	if id.Password == "" {
-		return
-	}
 	err = r.writeAsk(id)
 	if err != nil {
 		return
