@@ -29,6 +29,7 @@ func (r *Maven) Fetch(sourceDir string) (err error) {
 		"-f",
 		pom,
 	}
+	options.Addf("-DoutputDirectory=%s", r.BinDir)
 	err = r.run(options)
 	return
 }
@@ -44,6 +45,58 @@ func (r *Maven) FetchArtifact() (err error) {
 	options.Addf("-Dartifact=%s", artifact)
 	options.Add("-Dmdep.useBaseVersion=true")
 	err = r.run(options)
+	return
+}
+
+//
+// InstallArtifacts installs application artifacts.
+func (r *Maven) InstallArtifacts(sourceDir string) (err error) {
+	addon.Activity("[MVN] Install application.")
+	pom := pathlib.Join(sourceDir, "pom.xml")
+	options := command.Options{
+		"install",
+		"-DskipTests",
+		"-f",
+		pom,
+	}
+	err = r.run(options)
+	return
+}
+
+//
+// DeleteArtifacts deletes application artifacts.
+func (r *Maven) DeleteArtifacts(sourceDir string) (err error) {
+	addon.Activity("[MVN] Delete application artifacts.")
+	pom := pathlib.Join(sourceDir, "pom.xml")
+	options := command.Options{
+		"org.codehaus.mojo:build-helper-maven-plugin:3.3.0:remove-project-artifact",
+		"-f",
+		pom,
+	}
+	err = r.run(options)
+	return
+}
+
+//
+// HasModules determines if the POM specifies modules.
+func (r *Maven) HasModules(sourceDir string) (found bool, err error) {
+	pom := pathlib.Join(sourceDir, "pom.xml")
+	f, err := os.Open(pom)
+	if err != nil {
+		err = liberr.Wrap(err)
+		return
+	}
+	m, err := mxj.NewMapXmlReader(f)
+	if err != nil {
+		err = liberr.Wrap(err)
+		return
+	}
+	v, err := m.ValuesForPath("project.modules.module")
+	if err != nil {
+		err = liberr.Wrap(err)
+		return
+	}
+	found = len(v) > 0
 	return
 }
 
@@ -64,7 +117,6 @@ func (r *Maven) run(options command.Options) (err error) {
 	}
 	cmd := command.Command{Path: "/usr/bin/mvn"}
 	cmd.Options = options
-	cmd.Options.Addf("-DoutputDirectory=%s", r.BinDir)
 	cmd.Options.Addf("-Dmaven.repo.local=%s", r.M2Dir)
 	if insecure {
 		cmd.Options.Add("-Dmaven.wagon.http.ssl.insecure=true")
