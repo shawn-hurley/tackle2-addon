@@ -29,7 +29,6 @@ func (r *Maven) Fetch(sourceDir string) (err error) {
 		"-f",
 		pom,
 	}
-	options.Addf("-DoutputDirectory=%s", r.BinDir)
 	err = r.run(options)
 	return
 }
@@ -117,6 +116,7 @@ func (r *Maven) run(options command.Options) (err error) {
 	}
 	cmd := command.Command{Path: "/usr/bin/mvn"}
 	cmd.Options = options
+	cmd.Options.Addf("-DoutputDirectory=%s", r.BinDir)
 	cmd.Options.Addf("-Dmaven.repo.local=%s", r.M2Dir)
 	if insecure {
 		cmd.Options.Add("-Dmaven.wagon.http.ssl.insecure=true")
