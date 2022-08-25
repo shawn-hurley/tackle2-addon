@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"fmt"
 	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/konveyor/tackle2-addon/command"
@@ -110,9 +109,8 @@ func (r *Subversion) writeConfig() (err error) {
 		HomeDir,
 		".subversion",
 		"servers")
-	_, err = os.Stat(path)
-	if !errors.Is(err, os.ErrNotExist) {
-		err = liberr.Wrap(os.ErrExist)
+	found, err := nas.Exists(path)
+	if found || err != nil {
 		return
 	}
 	err = nas.MkDir(pathlib.Dir(path), 0755)
@@ -139,6 +137,7 @@ func (r *Subversion) writeConfig() (err error) {
 			path)
 	}
 	_ = f.Close()
+	addon.Activity("[FILE] Created %s.", path)
 	return
 }
 
@@ -219,7 +218,9 @@ func (r *Subversion) writePassword(id *api.Identity) (err error) {
 			err,
 			"path",
 			path)
+		return
 	}
+	addon.Activity("[FILE] Updated %s.", path)
 	return
 }
 

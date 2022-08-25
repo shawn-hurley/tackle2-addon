@@ -1,7 +1,6 @@
 package ssh
 
 import (
-	"errors"
 	"fmt"
 	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/konveyor/tackle2-addon/command"
@@ -65,9 +64,8 @@ func (r *Agent) Add(id *api.Identity, host string) (err error) {
 	path := pathlib.Join(
 		SSHDir,
 		suffix)
-	_, err = os.Stat(path)
-	if !errors.Is(err, os.ErrNotExist) {
-		err = liberr.Wrap(os.ErrExist)
+	found, err := nas.Exists(path)
+	if found || err != nil {
 		return
 	}
 	f, err := os.OpenFile(
@@ -124,6 +122,7 @@ func (r *Agent) Add(id *api.Identity, host string) (err error) {
 			path)
 	}
 	_ = f.Close()
+	addon.Activity("[FILE] Created %s.", path)
 	return
 }
 

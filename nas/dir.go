@@ -23,19 +23,7 @@ func RmDir(path string) (err error) {
 //
 // HasDir return if the path exists.
 func HasDir(path string) (found bool, err error) {
-	_, err = os.Stat(path)
-	if err == nil {
-		found = true
-		return
-	}
-	if !os.IsNotExist(err) {
-		err = liberr.Wrap(
-			err,
-			"path",
-			path)
-	} else {
-		err = nil
-	}
+	found, err = Exists(path)
 	return
 }
 
@@ -52,6 +40,25 @@ func MkDir(path string, mode os.FileMode) (err error) {
 				"path",
 				path)
 		}
+	}
+	return
+}
+
+//
+// Exists return if the path exists.
+func Exists(path string) (found bool, err error) {
+	_, err = os.Stat(path)
+	if err == nil {
+		found = true
+		return
+	}
+	if !os.IsNotExist(err) {
+		err = liberr.Wrap(
+			err,
+			"path",
+			path)
+	} else {
+		err = nil
 	}
 	return
 }
