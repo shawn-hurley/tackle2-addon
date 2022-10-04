@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"context"
 	"fmt"
 	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/konveyor/tackle2-addon/command"
@@ -10,6 +11,7 @@ import (
 	"os"
 	pathlib "path"
 	"strings"
+	"time"
 )
 
 var (
@@ -91,9 +93,13 @@ func (r *Agent) Add(id *api.Identity, host string) (err error) {
 	if err != nil {
 		return
 	}
+	ctx, fn := context.WithTimeout(
+		context.TODO(),
+		time.Second)
+	defer fn()
 	cmd := command.Command{Path: "/usr/bin/ssh-add"}
 	cmd.Options.Add(path)
-	err = cmd.Run()
+	err = cmd.RunWith(ctx)
 	if err != nil {
 		return
 	}
