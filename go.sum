@@ -338,8 +338,8 @@ github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxv
 github.com/konsorten/go-windows-terminal-sequences v1.0.3/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konveyor/controller v0.8.0 h1:TB4KOqnWKzpuW0LLI571NzQYIXI/bmcf9K1vl8ctVkg=
 github.com/konveyor/controller v0.8.0/go.mod h1:U2h8HnX1MXoUlLA8ySP+PJClK9+aR38mxtqLGAvAprE=
-github.com/konveyor/tackle2-hub v0.0.0-20221116220406-c0054328257d h1:QmdD0luoEOe4xQ1apzItn7HIxKSwKi0+/URTM+Rcvok=
-github.com/konveyor/tackle2-hub v0.0.0-20221116220406-c0054328257d/go.mod h1:/YlrzuavATpAvimbDMDW3w4tO45IAIsg9jSK48lTSr4=
+github.com/konveyor/tackle2-hub v0.0.0-20230118203912-beb582e472d9 h1:ahGtZfwrUz+ZHafspGSyEiVj4AJiM0MjqZLa9oRHaLk=
+github.com/konveyor/tackle2-hub v0.0.0-20230118203912-beb582e472d9/go.mod h1:/YlrzuavATpAvimbDMDW3w4tO45IAIsg9jSK48lTSr4=
 github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515/go.mod h1:+0opPa2QZZtGFBFZlji/RkVcI2GknAs/DXo4wKdlNEc=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pretty v0.2.0/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=

@@ -4,8 +4,8 @@ import (
 	"github.com/clbanning/mxj"
 	liberr "github.com/konveyor/controller/pkg/error"
 	"github.com/konveyor/tackle2-addon/command"
-	"github.com/konveyor/tackle2-addon/nas"
 	"github.com/konveyor/tackle2-hub/api"
+	"github.com/konveyor/tackle2-hub/nas"
 	"os"
 	pathlib "path"
 )
