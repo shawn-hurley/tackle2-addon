@@ -18,36 +18,56 @@ func init() {
 type SoftError = hub.SoftError
 
 // New SCM repository factory.
-func New(destDir string, application *api.Application) (r Repository, err error) {
-	kind := application.Repository.Kind
-	switch kind {
+func New(destDir string, remote *api.Repository, identities []api.Ref) (r SCM, err error) {
+	switch remote.Kind {
 	case "subversion":
-		r = &Subversion{}
+		r = &Subversion{
+			Path: destDir,
+			Remote: Remote{
+				Repository: remote,
+				Identities: identities,
+			},
+		}
 	default:
-		r = &Git{}
+		r = &Git{
+			Path: destDir,
+			Remote: Remote{
+				Repository: remote,
+				Identities: identities,
+			},
+		}
 	}
-	r.With(destDir, application)
 	err = r.Validate()
 	return
 }
 
-// Repository interface.
-type Repository interface {
-	With(path string, application *api.Application)
-	Fetch() (err error)
+// SCM interface.
+type SCM interface {
 	Validate() (err error)
+	Fetch() (err error)
 	Branch(name string) (err error)
 	Commit(files []string, msg string) (err error)
 }
 
-// SCM - source code manager.
-type SCM struct {
-	Application *api.Application
-	Path        string
+// Remote repository.
+type Remote struct {
+	*api.Repository
+	Identities []api.Ref
 }
 
-// With settings.
-func (r *SCM) With(path string, application *api.Application) {
-	r.Application = application
-	r.Path = path
+// FindIdentity by kind.
+func (r *Remote) findIdentity(kind string) (matched *api.Identity, found bool, err error) {
+	for _, ref := range r.Identities {
+		identity, nErr := addon.Identity.Get(ref.ID)
+		if nErr != nil {
+			err = nErr
+			return
+		}
+		if identity.Kind == kind {
+			found = true
+			matched = identity
+			break
+		}
+	}
+	return
 }

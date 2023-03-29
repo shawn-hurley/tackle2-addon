@@ -16,12 +16,13 @@ import (
 
 // Subversion repository.
 type Subversion struct {
-	SCM
+	Remote
+	Path string
 }
 
 // Validate settings.
 func (r *Subversion) Validate() (err error) {
-	u, err := urllib.Parse(r.Application.Repository.URL)
+	u, err := urllib.Parse(r.Remote.URL)
 	if err != nil {
 		err = &SoftError{Reason: err.Error()}
 		return
@@ -46,7 +47,7 @@ func (r *Subversion) Validate() (err error) {
 func (r *Subversion) Fetch() (err error) {
 	url := r.URL()
 	addon.Activity("[SVN] Cloning: %s", url.String())
-	id, found, err := addon.Application.FindIdentity(r.Application.ID, "source")
+	id, found, err := r.findIdentity("source")
 	if err != nil {
 		return
 	}
@@ -71,7 +72,7 @@ func (r *Subversion) Fetch() (err error) {
 	if err != nil {
 		return
 	}
-	return r.checkout(r.Application.Repository.Branch)
+	return r.checkout(r.Remote.Branch)
 }
 
 // checkout Checkouts the repository.
@@ -145,10 +146,9 @@ func (r *Subversion) Commit(files []string, msg string) (err error) {
 
 // URL returns the parsed URL.
 func (r *Subversion) URL() (u *urllib.URL) {
-	repository := r.Application.Repository
-	u, _ = urllib.Parse(repository.URL)
+	u, _ = urllib.Parse(r.Remote.URL)
 	u.RawPath = u.Path
-	branch := r.Application.Repository.Branch
+	branch := r.Remote.Branch
 	if branch == "" {
 		u.Path = pathlib.Join(u.Path, "trunk")
 	} else {
