@@ -2,7 +2,7 @@ package repository
 
 import (
 	"fmt"
-	liberr "github.com/konveyor/controller/pkg/error"
+	liberr "github.com/jortel/go-utils/error"
 	"github.com/konveyor/tackle2-addon/command"
 	"github.com/konveyor/tackle2-addon/ssh"
 	"github.com/konveyor/tackle2-hub/api"

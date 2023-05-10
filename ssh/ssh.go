@@ -3,7 +3,7 @@ package ssh
 import (
 	"context"
 	"fmt"
-	liberr "github.com/konveyor/controller/pkg/error"
+	liberr "github.com/jortel/go-utils/error"
 	"github.com/konveyor/tackle2-addon/command"
 	hub "github.com/konveyor/tackle2-hub/addon"
 	"github.com/konveyor/tackle2-hub/api"

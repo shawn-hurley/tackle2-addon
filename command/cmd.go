@@ -8,7 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	liberr "github.com/konveyor/controller/pkg/error"
+	liberr "github.com/jortel/go-utils/error"
 	hub "github.com/konveyor/tackle2-hub/addon"
 	"os/exec"
 	"strings"
