@@ -6,9 +6,7 @@ package command
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	liberr "github.com/jortel/go-utils/error"
 	hub "github.com/konveyor/tackle2-hub/addon"
 	"os/exec"
 	"strings"
@@ -17,8 +15,6 @@ import (
 var (
 	addon = hub.Addon
 )
-
-type SoftError = hub.SoftError
 
 //
 // Command execution.
@@ -51,28 +47,14 @@ func (r *Command) RunWith(ctx context.Context) (err error) {
 	cmd.Dir = r.Dir
 	r.Output, err = cmd.CombinedOutput()
 	if err != nil {
-		addon.Activity("[CMD] failed: %s.", err.Error())
+		addon.Activity(
+			"[CMD] %s failed: %s.\n%s",
+			r.Path,
+			err.Error(),
+			string(r.Output))
 	} else {
 		addon.Activity("[CMD] succeeded.")
 	}
-	exitErr := &exec.ExitError{}
-	if errors.As(err, &exitErr) {
-		err = &SoftError{
-			Reason: fmt.Sprintf("[CMD] %s failed: %s.", r.Path, err.Error()),
-		}
-		output := string(r.Output)
-		for _, line := range strings.Split(output, "\n") {
-			addon.Activity(
-				"> %s",
-				line)
-		}
-	} else {
-		err = liberr.Wrap(
-			err,
-			"command",
-			r.Path)
-	}
-
 	return
 }
 

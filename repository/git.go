@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	liberr "github.com/jortel/go-utils/error"
 	"github.com/konveyor/tackle2-addon/command"
@@ -33,9 +34,7 @@ func (r *Git) Validate() (err error) {
 	switch u.Scheme {
 	case "http":
 		if !insecure {
-			err = &SoftError{
-				Reason: "http URL used with git.insecure.enabled = FALSE",
-			}
+			err = errors.New("http URL used with git.insecure.enabled = FALSE")
 			return
 		}
 	}

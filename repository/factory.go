@@ -15,8 +15,6 @@ func init() {
 	HomeDir, _ = os.UserHomeDir()
 }
 
-type SoftError = hub.SoftError
-
 // New SCM repository factory.
 func New(destDir string, remote *api.Repository, identities []api.Ref) (r SCM, err error) {
 	switch remote.Kind {

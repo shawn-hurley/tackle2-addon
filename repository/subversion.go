@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	liberr "github.com/jortel/go-utils/error"
 	"github.com/konveyor/tackle2-addon/command"
@@ -24,7 +25,6 @@ type Subversion struct {
 func (r *Subversion) Validate() (err error) {
 	u, err := urllib.Parse(r.Remote.URL)
 	if err != nil {
-		err = &SoftError{Reason: err.Error()}
 		return
 	}
 	insecure, err := addon.Setting.Bool("svn.insecure.enabled")
@@ -34,9 +34,7 @@ func (r *Subversion) Validate() (err error) {
 	switch u.Scheme {
 	case "http":
 		if !insecure {
-			err = &SoftError{
-				Reason: "http URL used with snv.insecure.enabled = FALSE",
-			}
+			err = errors.New("http URL used with snv.insecure.enabled = FALSE")
 			return
 		}
 	}

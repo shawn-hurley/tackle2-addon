@@ -8,8 +8,6 @@ var (
 	addon = hub.Addon
 )
 
-type SoftError = hub.SoftError
-
 func main() {
 	addon.Run(func() (err error) {
 		return
