@@ -1,16 +1,24 @@
 package repository
 
 import (
-	"github.com/clbanning/mxj"
-	liberr "github.com/jortel/go-utils/error"
-	"github.com/konveyor/tackle2-addon/command"
-	"github.com/konveyor/tackle2-hub/api"
-	"github.com/konveyor/tackle2-hub/nas"
 	"os"
 	pathlib "path"
+
+	"github.com/konveyor/tackle2-addon/command"
+	"github.com/konveyor/tackle2-hub/nas"
+
+	"github.com/clbanning/mxj"
+	liberr "github.com/jortel/go-utils/error"
 )
 
-//
+const emptySettings = ` 
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0" 
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                 xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0
+                 http://maven.apache.org/xsd/settings-1.2.0.xsd">
+</settings>
+`
+
 // Maven repository.
 type Maven struct {
 	Remote
@@ -18,7 +26,70 @@ type Maven struct {
 	M2Dir  string
 }
 
-//
+// CreateSettingsFile creates the maven settings.xml file
+// Will exit with path and nil error if file exists already
+func (r *Maven) CreateSettingsFile() (path string, err error) {
+	dir, _ := os.Getwd()
+	path = pathlib.Join(dir, "settings.xml")
+	found, err := nas.Exists(path)
+	if found || err != nil {
+		return
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		err = liberr.Wrap(
+			err,
+			"path",
+			path)
+		return
+	}
+	defer f.Close()
+	id, found, err := r.findIdentity("maven")
+	if err != nil {
+		return
+	}
+	var settingsXML mxj.Map
+	if found {
+		addon.Activity(
+			"[MVN] Using credentials (id=%d) %s.",
+			id.ID,
+			id.Name)
+		settingsXML, err = mxj.NewMapXml([]byte(id.Settings))
+		if err != nil {
+			err = liberr.Wrap(err)
+			return
+		}
+	} else {
+		settingsXML, err = mxj.NewMapXml([]byte(emptySettings))
+		if err != nil {
+			err = liberr.Wrap(err)
+			return
+		}
+	}
+	err = r.injectProxy(settingsXML)
+	if err != nil {
+		return
+	}
+	err = r.injectCacheDir(settingsXML)
+	if err != nil {
+		return
+	}
+	settings, err := settingsXML.XmlIndent("", "  ")
+	if err != nil {
+		err = liberr.Wrap(err)
+		return
+	}
+	_, err = f.Write(settings)
+	if err != nil {
+		err = liberr.Wrap(
+			err,
+			"path",
+			path)
+	}
+	addon.Activity("[FILE] Created %s.", path)
+	return
+}
+
 // Fetch fetches dependencies listed in the POM.
 func (r *Maven) Fetch(sourceDir string) (err error) {
 	addon.Activity("[MVN] Fetch dependencies.")
@@ -32,7 +103,6 @@ func (r *Maven) Fetch(sourceDir string) (err error) {
 	return
 }
 
-//
 // FetchArtifact fetches an application artifact.
 func (r *Maven) FetchArtifact(artifact string) (err error) {
 	addon.Activity("[MVN] Fetch artifact %s.", artifact)
@@ -45,7 +115,6 @@ func (r *Maven) FetchArtifact(artifact string) (err error) {
 	return
 }
 
-//
 // InstallArtifacts installs application artifacts.
 func (r *Maven) InstallArtifacts(sourceDir string) (err error) {
 	addon.Activity("[MVN] Install application.")
@@ -60,7 +129,6 @@ func (r *Maven) InstallArtifacts(sourceDir string) (err error) {
 	return
 }
 
-//
 // DeleteArtifacts deletes application artifacts.
 func (r *Maven) DeleteArtifacts(sourceDir string) (err error) {
 	addon.Activity("[MVN] Delete application artifacts.")
@@ -74,7 +142,6 @@ func (r *Maven) DeleteArtifacts(sourceDir string) (err error) {
 	return
 }
 
-//
 // HasModules determines if the POM specifies modules.
 func (r *Maven) HasModules(sourceDir string) (found bool, err error) {
 	pom := pathlib.Join(sourceDir, "pom.xml")
@@ -97,10 +164,9 @@ func (r *Maven) HasModules(sourceDir string) (found bool, err error) {
 	return
 }
 
-//
 // run executes maven.
 func (r *Maven) run(options command.Options) (err error) {
-	settings, err := r.writeSettings()
+	settings, err := r.CreateSettingsFile()
 	if err != nil {
 		return
 	}
@@ -126,61 +192,17 @@ func (r *Maven) run(options command.Options) (err error) {
 	return
 }
 
-//
-// writeSettings writes settings file.
-func (r *Maven) writeSettings() (path string, err error) {
-	id, found, err := r.findIdentity("maven")
-	if err != nil {
-		return
-	}
-	if found {
-		addon.Activity(
-			"[MVN] Using credentials (id=%d) %s.",
-			id.ID,
-			id.Name)
-	} else {
-		return
-	}
-	dir, _ := os.Getwd()
-	path = pathlib.Join(dir, "settings.xml")
-	found, err = nas.Exists(path)
-	if found || err != nil {
-		return
-	}
-	f, err := os.Create(path)
-	if err != nil {
-		err = liberr.Wrap(
-			err,
-			"path",
-			path)
-		return
-	}
-	settings := id.Settings
-	settings, err = r.injectProxy(id)
-	if err != nil {
-		return
-	}
-	_, err = f.Write([]byte(settings))
-	if err != nil {
-		err = liberr.Wrap(
-			err,
-			"path",
-			path)
-	}
-	_ = f.Close()
-	addon.Activity("[FILE] Created %s.", path)
-	return
-}
-
-//
-// injectProxy injects proxy settings.
-func (r *Maven) injectProxy(id *api.Identity) (s string, err error) {
-	s = id.Settings
-	m, err := mxj.NewMapXml([]byte(id.Settings))
+func (r *Maven) injectCacheDir(settings mxj.Map) (err error) {
+	err = settings.SetValueForPath(r.M2Dir, "settings.localRepository")
 	if err != nil {
 		err = liberr.Wrap(err)
 		return
 	}
+	return
+}
+
+// injectProxy injects proxy settings.
+func (r *Maven) injectProxy(settingsXML mxj.Map) (err error) {
 	proxies, err := addon.Proxy.List()
 	if err != nil {
 		return
@@ -215,19 +237,17 @@ func (r *Maven) injectProxy(id *api.Identity) (s string, err error) {
 	if len(pList) == 0 {
 		return
 	}
-	v, err := m.ValuesForPath("settings.proxies.proxy")
+	v, err := settingsXML.ValuesForPath("settings.proxies.proxy")
 	if err != nil {
 		err = liberr.Wrap(err)
 		return
 	}
-	err = m.SetValueForPath(
+	err = settingsXML.SetValueForPath(
 		mxj.Map{"proxy": append(v, pList...)},
 		"settings.proxies")
 	if err != nil {
 		err = liberr.Wrap(err)
 		return
 	}
-	b, err := m.XmlIndent("", "  ")
-	s = string(b)
 	return
 }
