@@ -7,9 +7,10 @@ package command
 import (
 	"context"
 	"fmt"
-	hub "github.com/konveyor/tackle2-hub/addon"
 	"os/exec"
 	"strings"
+
+	hub "github.com/konveyor/tackle2-hub/addon"
 )
 
 var (
@@ -60,7 +61,8 @@ func (r *Command) RunWith(ctx context.Context) (err error) {
 
 //
 // RunSilent executes the command.
-// Nothing reported in task Report.Activity.
+// On error: The command (without arguments) and output are
+// reported in task Report.Activity
 func (r *Command) RunSilent() (err error) {
 	err = r.RunSilentWith(context.TODO())
 	return
@@ -68,11 +70,19 @@ func (r *Command) RunSilent() (err error) {
 
 //
 // RunSilentWith executes the command with context.
-// Nothing reported in task Report.Activity.
+// On error: The command (without arguments) and output are
+// reported in task Report.Activity
 func (r *Command) RunSilentWith(ctx context.Context) (err error) {
 	cmd := exec.CommandContext(ctx, r.Path, r.Options...)
 	cmd.Dir = r.Dir
-	err = cmd.Run()
+	r.Output, err = cmd.CombinedOutput()
+	if err != nil {
+		addon.Activity(
+			"[CMD] %s failed: %s.\n%s",
+			r.Path,
+			err.Error(),
+			string(r.Output))
+	}
 	return
 }
 
