@@ -81,7 +81,7 @@ func (r *Subversion) checkout(branch string) (err error) {
 	if err != nil {
 		return
 	}
-	cmd := command.Command{Path: "/usr/bin/svn"}
+	cmd := command.New("/usr/bin/svn")
 	cmd.Options.Add("--non-interactive")
 	if insecure {
 		cmd.Options.Add("--trust-server-cert")
@@ -105,7 +105,7 @@ func (r *Subversion) Branch(name string) error {
 // createBranch creates a branch with the given name
 func (r *Subversion) createBranch(name string) (err error) {
 	url := *r.URL()
-	cmd := command.Command{Path: "/usr/bin/svn"}
+	cmd := command.New("/usr/bin/svn")
 	cmd.Options.Add("--non-interactive")
 
 	branchUrl := url
@@ -121,7 +121,7 @@ func (r *Subversion) createBranch(name string) (err error) {
 
 // addFiles adds files to staging area
 func (r *Subversion) addFiles(files []string) (err error) {
-	cmd := command.Command{Path: "/usr/bin/svn"}
+	cmd := command.New("/usr/bin/svn")
 	cmd.Dir = r.Path
 	cmd.Options.Add("add")
 	cmd.Options.Add("--force", files...)
@@ -135,7 +135,7 @@ func (r *Subversion) Commit(files []string, msg string) (err error) {
 	if err != nil {
 		return
 	}
-	cmd := command.Command{Path: "/usr/bin/svn"}
+	cmd := command.New("/usr/bin/svn")
 	cmd.Dir = r.Path
 	cmd.Options.Add("commit", "-m", msg)
 	err = cmd.Run()
@@ -199,7 +199,7 @@ func (r *Subversion) writePassword(id *api.Identity) (err error) {
 		return
 	}
 
-	cmd := command.Command{Path: "/usr/bin/svn"}
+	cmd := command.New("/usr/bin/svn")
 	cmd.Options.Add("--non-interactive")
 	cmd.Options.Add("--username")
 	cmd.Options.Add(id.User)

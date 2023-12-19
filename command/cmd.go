@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
-	"strings"
 
 	hub "github.com/konveyor/tackle2-hub/addon"
+	"path"
 )
 
 var (
@@ -18,12 +18,20 @@ var (
 )
 
 //
+// New returns a command.
+func New(path string) (cmd *Command) {
+	cmd = &Command{Path: path}
+	return
+}
+
+//
 // Command execution.
 type Command struct {
-	Options Options
-	Path    string
-	Dir     string
-	Output  []byte
+	Options  Options
+	Path     string
+	Dir      string
+	Reporter Reporter
+	Writer   Writer
 }
 
 //
@@ -40,22 +48,31 @@ func (r *Command) Run() (err error) {
 // The command and output are both reported in
 // task Report.Activity.
 func (r *Command) RunWith(ctx context.Context) (err error) {
-	addon.Activity(
-		"[CMD] Running: %s %s",
-		r.Path,
-		strings.Join(r.Options, " "))
+	r.Writer.reporter = &r.Reporter
+	output := path.Base(r.Path) + ".output"
+	r.Reporter.file, err = addon.File.Touch(output)
+	if err != nil {
+		return
+	}
+	r.Reporter.Run(r.Path, r.Options)
+	addon.Attach(r.Reporter.file)
+	defer func() {
+		r.Writer.End()
+		if err != nil {
+			r.Reporter.Error(r.Path, err, r.Writer.buffer)
+		} else {
+			r.Reporter.Succeeded(r.Path, r.Writer.buffer)
+		}
+	}()
 	cmd := exec.CommandContext(ctx, r.Path, r.Options...)
 	cmd.Dir = r.Dir
-	r.Output, err = cmd.CombinedOutput()
+	cmd.Stdout = &r.Writer
+	cmd.Stderr = &r.Writer
+	err = cmd.Start()
 	if err != nil {
-		addon.Activity(
-			"[CMD] %s failed: %s.\n%s",
-			r.Path,
-			err.Error(),
-			string(r.Output))
-	} else {
-		addon.Activity("[CMD] succeeded.")
+		return
 	}
+	err = cmd.Wait()
 	return
 }
 
@@ -64,26 +81,15 @@ func (r *Command) RunWith(ctx context.Context) (err error) {
 // On error: The command (without arguments) and output are
 // reported in task Report.Activity
 func (r *Command) RunSilent() (err error) {
-	err = r.RunSilentWith(context.TODO())
+	r.Reporter.Verbosity = Error
+	err = r.RunWith(context.TODO())
 	return
 }
 
 //
-// RunSilentWith executes the command with context.
-// On error: The command (without arguments) and output are
-// reported in task Report.Activity
-func (r *Command) RunSilentWith(ctx context.Context) (err error) {
-	cmd := exec.CommandContext(ctx, r.Path, r.Options...)
-	cmd.Dir = r.Dir
-	r.Output, err = cmd.CombinedOutput()
-	if err != nil {
-		addon.Activity(
-			"[CMD] %s failed: %s.\n%s",
-			r.Path,
-			err.Error(),
-			string(r.Output))
-	}
-	return
+// Output returns the command output.
+func (r *Command) Output() (b []byte) {
+	return r.Writer.buffer
 }
 
 //
@@ -91,14 +97,14 @@ func (r *Command) RunSilentWith(ctx context.Context) (err error) {
 type Options []string
 
 //
-// add
+// Add option.
 func (a *Options) Add(option string, s ...string) {
 	*a = append(*a, option)
 	*a = append(*a, s...)
 }
 
 //
-// add
+// Addf option.
 func (a *Options) Addf(option string, x ...interface{}) {
 	*a = append(*a, fmt.Sprintf(option, x...))
 }

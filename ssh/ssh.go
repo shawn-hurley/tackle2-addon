@@ -38,7 +38,7 @@ type Agent struct {
 func (r *Agent) Start() (err error) {
 	pid := os.Getpid()
 	socket := fmt.Sprintf("/tmp/agent.%d", pid)
-	cmd := command.Command{Path: "/usr/bin/ssh-agent"}
+	cmd := command.New("/usr/bin/ssh-agent")
 	cmd.Options.Add("-a", socket)
 	err = cmd.Run()
 	if err != nil {
@@ -97,13 +97,13 @@ func (r *Agent) Add(id *api.Identity, host string) (err error) {
 		context.TODO(),
 		time.Second)
 	defer fn()
-	cmd := command.Command{Path: "/usr/bin/ssh-add"}
+	cmd := command.New("/usr/bin/ssh-add")
 	cmd.Options.Add(path)
 	err = cmd.RunWith(ctx)
 	if err != nil {
 		return
 	}
-	cmd = command.Command{Path: "/usr/bin/ssh-keyscan"}
+	cmd = command.New("/usr/bin/ssh-keyscan")
 	cmd.Options.Add(host)
 	err = cmd.Run()
 	if err != nil {
@@ -120,7 +120,7 @@ func (r *Agent) Add(id *api.Identity, host string) (err error) {
 			path)
 		return
 	}
-	_, err = f.Write(cmd.Output)
+	_, err = f.Write(cmd.Output())
 	if err != nil {
 		err = liberr.Wrap(
 			err,

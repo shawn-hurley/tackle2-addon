@@ -71,7 +71,7 @@ func (r *Git) Fetch() (err error) {
 	if err != nil {
 		return
 	}
-	cmd := command.Command{Path: "/usr/bin/git"}
+	cmd := command.New("/usr/bin/git")
 	cmd.Options.Add("clone", url.String(), r.Path)
 	err = cmd.Run()
 	if err != nil {
@@ -83,12 +83,12 @@ func (r *Git) Fetch() (err error) {
 
 // Branch creates a branch with the given name if not exist and switch to it.
 func (r *Git) Branch(name string) (err error) {
-	cmd := command.Command{Path: "/usr/bin/git"}
+	cmd := command.New("/usr/bin/git")
 	cmd.Dir = r.Path
 	cmd.Options.Add("checkout", name)
 	err = cmd.Run()
 	if err != nil {
-		cmd = command.Command{Path: "/usr/bin/git"}
+		cmd = command.New("/usr/bin/git")
 		cmd.Dir = r.Path
 		cmd.Options.Add("checkout", "-b", name)
 	}
@@ -98,7 +98,7 @@ func (r *Git) Branch(name string) (err error) {
 
 // addFiles adds files to staging area.
 func (r *Git) addFiles(files []string) (err error) {
-	cmd := command.Command{Path: "/usr/bin/git"}
+	cmd := command.New("/usr/bin/git")
 	cmd.Dir = r.Path
 	cmd.Options.Add("add", files...)
 	return cmd.Run()
@@ -110,7 +110,7 @@ func (r *Git) Commit(files []string, msg string) (err error) {
 	if err != nil {
 		return err
 	}
-	cmd := command.Command{Path: "/usr/bin/git"}
+	cmd := command.New("/usr/bin/git")
 	cmd.Dir = r.Path
 	cmd.Options.Add("commit")
 	cmd.Options.Add("--message", msg)
@@ -123,7 +123,7 @@ func (r *Git) Commit(files []string, msg string) (err error) {
 
 // push changes to remote.
 func (r *Git) push() (err error) {
-	cmd := command.Command{Path: "/usr/bin/git"}
+	cmd := command.New("/usr/bin/git")
 	cmd.Dir = r.Path
 	cmd.Options.Add("push", "--set-upstream", "origin", r.Remote.Branch)
 	return cmd.Run()
@@ -292,7 +292,7 @@ func (r *Git) checkout() (err error) {
 		_ = os.Chdir(dir)
 	}()
 	_ = os.Chdir(r.Path)
-	cmd := command.Command{Path: "/usr/bin/git"}
+	cmd := command.New("/usr/bin/git")
 	cmd.Options.Add("checkout", branch)
 	err = cmd.Run()
 	return
