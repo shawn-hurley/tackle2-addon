@@ -178,7 +178,7 @@ func (r *Maven) run(options command.Options) (err error) {
 	if err != nil {
 		return
 	}
-	cmd := command.New("/usr/bin/svn")
+	cmd := command.New("/usr/bin/mvn")
 	cmd.Options = options
 	cmd.Options.Addf("-DoutputDirectory=%s", r.BinDir)
 	cmd.Options.Addf("-Dmaven.repo.local=%s", r.M2Dir)
