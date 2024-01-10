@@ -27,13 +27,9 @@ func (r *Git) Validate() (err error) {
 	if err != nil {
 		return
 	}
-	insecure, err := addon.Setting.Bool("git.insecure.enabled")
-	if err != nil {
-		return
-	}
 	switch u.Scheme {
 	case "http":
-		if !insecure {
+		if !r.Insecure {
 			err = errors.New("http URL used with git.insecure.enabled = FALSE")
 			return
 		}
@@ -151,10 +147,7 @@ func (r *Git) writeConfig() (err error) {
 			path)
 		return
 	}
-	insecure, err := addon.Setting.Bool("git.insecure.enabled")
-	if err != nil {
-		return
-	}
+
 	proxy, err := r.proxy()
 	if err != nil {
 		return
@@ -165,7 +158,7 @@ func (r *Git) writeConfig() (err error) {
 	s += "[credential]\n"
 	s += "helper = store\n"
 	s += "[http]\n"
-	s += fmt.Sprintf("sslVerify = %t\n", !insecure)
+	s += fmt.Sprintf("sslVerify = %t\n", !r.Insecure)
 	if proxy != "" {
 		s += fmt.Sprintf("proxy = %s\n", proxy)
 	}
@@ -181,7 +174,6 @@ func (r *Git) writeConfig() (err error) {
 	return
 }
 
-//
 // writeCreds writes credentials (store) file.
 func (r *Git) writeCreds(id *api.Identity) (err error) {
 	if id.User == "" || id.Password == "" {

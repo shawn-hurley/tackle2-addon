@@ -1,9 +1,10 @@
 package repository
 
 import (
+	"os"
+
 	hub "github.com/konveyor/tackle2-hub/addon"
 	"github.com/konveyor/tackle2-hub/api"
-	"os"
 )
 
 var (
@@ -17,21 +18,32 @@ func init() {
 
 // New SCM repository factory.
 func New(destDir string, remote *api.Repository, identities []api.Ref) (r SCM, err error) {
+	var insecure bool
 	switch remote.Kind {
 	case "subversion":
+		insecure, err = addon.Setting.Bool("svn.insecure.enabled")
+		if err != nil {
+			return
+		}
 		r = &Subversion{
 			Path: destDir,
 			Remote: Remote{
 				Repository: remote,
 				Identities: identities,
+				Insecure:   insecure,
 			},
 		}
 	default:
+		insecure, err = addon.Setting.Bool("git.insecure.enabled")
+		if err != nil {
+			return
+		}
 		r = &Git{
 			Path: destDir,
 			Remote: Remote{
 				Repository: remote,
 				Identities: identities,
+				Insecure:   insecure,
 			},
 		}
 	}
@@ -51,6 +63,7 @@ type SCM interface {
 type Remote struct {
 	*api.Repository
 	Identities []api.Ref
+	Insecure   bool
 }
 
 // FindIdentity by kind.

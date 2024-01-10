@@ -3,16 +3,17 @@ package repository
 import (
 	"errors"
 	"fmt"
-	liberr "github.com/jortel/go-utils/error"
-	"github.com/konveyor/tackle2-addon/command"
-	"github.com/konveyor/tackle2-addon/ssh"
-	"github.com/konveyor/tackle2-hub/api"
-	"github.com/konveyor/tackle2-hub/nas"
 	"io"
 	urllib "net/url"
 	"os"
 	pathlib "path"
 	"strings"
+
+	liberr "github.com/jortel/go-utils/error"
+	"github.com/konveyor/tackle2-addon/command"
+	"github.com/konveyor/tackle2-addon/ssh"
+	"github.com/konveyor/tackle2-hub/api"
+	"github.com/konveyor/tackle2-hub/nas"
 )
 
 // Subversion repository.
@@ -27,13 +28,9 @@ func (r *Subversion) Validate() (err error) {
 	if err != nil {
 		return
 	}
-	insecure, err := addon.Setting.Bool("svn.insecure.enabled")
-	if err != nil {
-		return
-	}
 	switch u.Scheme {
 	case "http":
-		if !insecure {
+		if !r.Insecure {
 			err = errors.New("http URL used with snv.insecure.enabled = FALSE")
 			return
 		}
@@ -77,13 +74,9 @@ func (r *Subversion) Fetch() (err error) {
 func (r *Subversion) checkout(branch string) (err error) {
 	url := r.URL()
 	_ = nas.RmDir(r.Path)
-	insecure, err := addon.Setting.Bool("svn.insecure.enabled")
-	if err != nil {
-		return
-	}
 	cmd := command.New("/usr/bin/svn")
 	cmd.Options.Add("--non-interactive")
-	if insecure {
+	if r.Insecure {
 		cmd.Options.Add("--trust-server-cert")
 	}
 
@@ -124,6 +117,10 @@ func (r *Subversion) addFiles(files []string) (err error) {
 	cmd := command.New("/usr/bin/svn")
 	cmd.Dir = r.Path
 	cmd.Options.Add("add")
+	cmd.Options.Add("--non-interactive")
+	if r.Insecure {
+		cmd.Options.Add("--trust-server-cert")
+	}
 	cmd.Options.Add("--force", files...)
 	err = cmd.Run()
 	return
@@ -138,6 +135,10 @@ func (r *Subversion) Commit(files []string, msg string) (err error) {
 	cmd := command.New("/usr/bin/svn")
 	cmd.Dir = r.Path
 	cmd.Options.Add("commit", "-m", msg)
+	cmd.Options.Add("--non-interactive")
+	if r.Insecure {
+		cmd.Options.Add("--trust-server-cert")
+	}
 	err = cmd.Run()
 	return
 }
@@ -201,6 +202,9 @@ func (r *Subversion) writePassword(id *api.Identity) (err error) {
 
 	cmd := command.New("/usr/bin/svn")
 	cmd.Options.Add("--non-interactive")
+	if r.Insecure {
+		cmd.Options.Add("--trust-server-cert")
+	}
 	cmd.Options.Add("--username")
 	cmd.Options.Add(id.User)
 	cmd.Options.Add("--password")
