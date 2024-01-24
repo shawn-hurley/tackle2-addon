@@ -3,15 +3,16 @@ package repository
 import (
 	"errors"
 	"fmt"
+	urllib "net/url"
+	"os"
+	pathlib "path"
+	"strings"
+
 	liberr "github.com/jortel/go-utils/error"
 	"github.com/konveyor/tackle2-addon/command"
 	"github.com/konveyor/tackle2-addon/ssh"
 	"github.com/konveyor/tackle2-hub/api"
 	"github.com/konveyor/tackle2-hub/nas"
-	urllib "net/url"
-	"os"
-	pathlib "path"
-	"strings"
 )
 
 // Git repository.

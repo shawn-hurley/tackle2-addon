@@ -2,10 +2,10 @@ package command
 
 import (
 	"strings"
+
 	"github.com/konveyor/tackle2-hub/api"
 )
 
-//
 // Verbosity.
 const (
 	// Disabled reports: NOTHING.
@@ -18,7 +18,6 @@ const (
 	LiveOutput = 1
 )
 
-//
 // Reporter activity reporter.
 type Reporter struct {
 	Verbosity int
@@ -26,7 +25,6 @@ type Reporter struct {
 	index     int
 }
 
-//
 // Run reports command started in task Report.Activity.
 func (r *Reporter) Run(path string, options Options) {
 	switch r.Verbosity {
@@ -41,7 +39,6 @@ func (r *Reporter) Run(path string, options Options) {
 	}
 }
 
-//
 // Succeeded reports command succeeded in task Report.Activity.
 func (r *Reporter) Succeeded(path string, output []byte) {
 	switch r.Verbosity {
@@ -59,7 +56,6 @@ func (r *Reporter) Succeeded(path string, output []byte) {
 	}
 }
 
-//
 // Error reports command failed in task Report.Activity.
 func (r *Reporter) Error(path string, err error, output []byte) {
 	if len(output) == 0 {
@@ -82,7 +78,6 @@ func (r *Reporter) Error(path string, err error, output []byte) {
 	}
 }
 
-//
 // Output reports command output.
 func (r *Reporter) Output(buffer []byte) (reported int) {
 	switch r.Verbosity {
@@ -103,7 +98,6 @@ func (r *Reporter) Output(buffer []byte) (reported int) {
 	return
 }
 
-//
 // append output.
 func (r *Reporter) append(batch []byte) {
 	if r.file == nil {

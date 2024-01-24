@@ -9,22 +9,21 @@ import (
 	"fmt"
 	"os/exec"
 
-	hub "github.com/konveyor/tackle2-hub/addon"
 	"path"
+
+	hub "github.com/konveyor/tackle2-hub/addon"
 )
 
 var (
 	addon = hub.Addon
 )
 
-//
 // New returns a command.
 func New(path string) (cmd *Command) {
 	cmd = &Command{Path: path}
 	return
 }
 
-//
 // Command execution.
 type Command struct {
 	Options  Options
@@ -34,7 +33,6 @@ type Command struct {
 	Writer   Writer
 }
 
-//
 // Run executes the command.
 // The command and output are both reported in
 // task Report.Activity.
@@ -43,7 +41,6 @@ func (r *Command) Run() (err error) {
 	return
 }
 
-//
 // RunWith executes the command with context.
 // The command and output are both reported in
 // task Report.Activity.
@@ -76,7 +73,6 @@ func (r *Command) RunWith(ctx context.Context) (err error) {
 	return
 }
 
-//
 // RunSilent executes the command.
 // On error: The command (without arguments) and output are
 // reported in task Report.Activity
@@ -86,24 +82,20 @@ func (r *Command) RunSilent() (err error) {
 	return
 }
 
-//
 // Output returns the command output.
 func (r *Command) Output() (b []byte) {
 	return r.Writer.buffer
 }
 
-//
 // Options are CLI options.
 type Options []string
 
-//
 // Add option.
 func (a *Options) Add(option string, s ...string) {
 	*a = append(*a, option)
 	*a = append(*a, s...)
 }
 
-//
 // Addf option.
 func (a *Options) Addf(option string, x ...interface{}) {
 	*a = append(*a, fmt.Sprintf(option, x...))

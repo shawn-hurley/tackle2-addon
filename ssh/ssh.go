@@ -3,15 +3,16 @@ package ssh
 import (
 	"context"
 	"fmt"
+	"os"
+	pathlib "path"
+	"strings"
+	"time"
+
 	liberr "github.com/jortel/go-utils/error"
 	"github.com/konveyor/tackle2-addon/command"
 	hub "github.com/konveyor/tackle2-hub/addon"
 	"github.com/konveyor/tackle2-hub/api"
 	"github.com/konveyor/tackle2-hub/nas"
-	"os"
-	pathlib "path"
-	"strings"
-	"time"
 )
 
 var (
@@ -28,12 +29,10 @@ func init() {
 
 }
 
-//
 // Agent agent.
 type Agent struct {
 }
 
-//
 // Start the ssh-agent.
 func (r *Agent) Start() (err error) {
 	pid := os.Getpid()
@@ -55,7 +54,6 @@ func (r *Agent) Start() (err error) {
 	return
 }
 
-//
 // Add ssh key.
 func (r *Agent) Add(id *api.Identity, host string) (err error) {
 	if id.Key == "" {
@@ -132,7 +130,6 @@ func (r *Agent) Add(id *api.Identity, host string) (err error) {
 	return
 }
 
-//
 // Ensure key formatting.
 func (r *Agent) format(in string) (out string) {
 	if in != "" {
@@ -141,7 +138,6 @@ func (r *Agent) format(in string) (out string) {
 	return
 }
 
-//
 // writeAsk writes script that returns the key password.
 func (r *Agent) writeAsk(id *api.Identity) (err error) {
 	path := "/tmp/ask.sh"

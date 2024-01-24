@@ -13,7 +13,6 @@ const (
 	MinBackoff = Backoff
 )
 
-//
 // Writer records command output.
 type Writer struct {
 	reporter *Reporter
@@ -23,7 +22,6 @@ type Writer struct {
 	ended    chan any
 }
 
-//
 // Write command output.
 func (w *Writer) Write(p []byte) (n int, err error) {
 	n = len(p)
@@ -39,7 +37,6 @@ func (w *Writer) Write(p []byte) (n int, err error) {
 	return
 }
 
-//
 // End of writing.
 func (w *Writer) End() {
 	if w.end == nil {
@@ -51,7 +48,6 @@ func (w *Writer) End() {
 	w.end = nil
 }
 
-//
 // report in task Report.Activity.
 // Rate limited.
 func (w *Writer) report() {
@@ -72,7 +68,6 @@ func (w *Writer) report() {
 	w.ended <- true
 }
 
-//
 // adjustBackoff adjust the backoff as needed.
 // incremented when output reported.
 // decremented when no outstanding output reported.

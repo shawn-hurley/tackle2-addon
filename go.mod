@@ -1,11 +1,11 @@
 module github.com/konveyor/tackle2-addon
 
-go 1.18
+go 1.20
 
 require (
 	github.com/clbanning/mxj v1.8.4
 	github.com/jortel/go-utils v0.1.2
-	github.com/konveyor/tackle2-hub v0.3.0-rc.2.0.20231219211826-f09d0b24c0e6
+	github.com/konveyor/tackle2-hub v0.3.0-rc.4.0.20240123170057-e18a6547d4af
 )
 
 require (

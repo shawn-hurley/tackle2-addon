@@ -1,15 +1,13 @@
 package main
 
 import (
-	hub "github.com/konveyor/tackle2-hub/addon"
-)
-
-var (
-	addon = hub.Addon
+	"github.com/konveyor/tackle2-addon/command"
+	"github.com/konveyor/tackle2-addon/repository"
+	"github.com/konveyor/tackle2-addon/ssh"
 )
 
 func main() {
-	addon.Run(func() (err error) {
-		return
-	})
+	_ = command.New("")
+	_ = ssh.Agent{}
+	_, _ = repository.New("", nil, nil)
 }
