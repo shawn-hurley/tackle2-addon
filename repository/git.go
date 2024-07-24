@@ -72,6 +72,7 @@ func (r *Git) Fetch() (err error) {
 	cmd.Options.Add("clone", url.String(), r.Path)
 	err = cmd.Run()
 	if err != nil {
+		fmt.Printf("invalid cmd run: %v", string(cmd.Output))
 		return
 	}
 	err = r.checkout()
