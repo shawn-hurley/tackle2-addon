@@ -46,7 +46,10 @@ func (r *Git) Validate() (err error) {
 func (r *Git) Fetch() (err error) {
 	url := r.URL()
 	addon.Activity("[GIT] Cloning: %s", url.String())
-	_ = nas.RmDir(r.Path)
+	err = nas.RmDir(r.Path)
+	if err != nil {
+		return err
+	}
 	id, found, err := r.findIdentity("source")
 	if err != nil {
 		return
@@ -74,6 +77,12 @@ func (r *Git) Fetch() (err error) {
 	}
 	cmd := command.Command{Path: "/usr/bin/git"}
 	cmd.Options.Add("clone", url.String(), r.Path)
+	if _, err := os.Stat(r.Path); err == nil {
+		err = os.RemoveAll(r.Path)
+		if err != nil {
+			return err
+		}
+	}
 	err = cmd.Run()
 	if err != nil {
 		fmt.Printf("invalid cmd run: %v", string(cmd.Output()))
