@@ -28,9 +28,13 @@ func (r *Git) Validate() (err error) {
 	if err != nil {
 		return
 	}
+	insecure, err := addon.Setting.Bool("git.insecure.enabled")
+	if err != nil {
+		return
+	}
 	switch u.Scheme {
 	case "http":
-		if !r.Insecure {
+		if !insecure {
 			err = errors.New("http URL used with git.insecure.enabled = FALSE")
 			return
 		}
@@ -68,11 +72,11 @@ func (r *Git) Fetch() (err error) {
 	if err != nil {
 		return
 	}
-	cmd := command.New("/usr/bin/git")
+	cmd := command.Command{Path: "/usr/bin/git"}
 	cmd.Options.Add("clone", url.String(), r.Path)
 	err = cmd.Run()
 	if err != nil {
-		fmt.Printf("invalid cmd run: %v", string(cmd.Output))
+		fmt.Printf("invalid cmd run: %v", string(cmd.Output()))
 		return
 	}
 	err = r.checkout()
@@ -81,12 +85,12 @@ func (r *Git) Fetch() (err error) {
 
 // Branch creates a branch with the given name if not exist and switch to it.
 func (r *Git) Branch(name string) (err error) {
-	cmd := command.New("/usr/bin/git")
+	cmd := command.Command{Path: "/usr/bin/git"}
 	cmd.Dir = r.Path
 	cmd.Options.Add("checkout", name)
 	err = cmd.Run()
 	if err != nil {
-		cmd = command.New("/usr/bin/git")
+		cmd = command.Command{Path: "/usr/bin/git"}
 		cmd.Dir = r.Path
 		cmd.Options.Add("checkout", "-b", name)
 	}
@@ -96,7 +100,7 @@ func (r *Git) Branch(name string) (err error) {
 
 // addFiles adds files to staging area.
 func (r *Git) addFiles(files []string) (err error) {
-	cmd := command.New("/usr/bin/git")
+	cmd := command.Command{Path: "/usr/bin/git"}
 	cmd.Dir = r.Path
 	cmd.Options.Add("add", files...)
 	return cmd.Run()
@@ -108,7 +112,7 @@ func (r *Git) Commit(files []string, msg string) (err error) {
 	if err != nil {
 		return err
 	}
-	cmd := command.New("/usr/bin/git")
+	cmd := command.Command{Path: "/usr/bin/git"}
 	cmd.Dir = r.Path
 	cmd.Options.Add("commit")
 	cmd.Options.Add("--message", msg)
@@ -121,7 +125,7 @@ func (r *Git) Commit(files []string, msg string) (err error) {
 
 // push changes to remote.
 func (r *Git) push() (err error) {
-	cmd := command.New("/usr/bin/git")
+	cmd := command.Command{Path: "/usr/bin/git"}
 	cmd.Dir = r.Path
 	cmd.Options.Add("push", "--set-upstream", "origin", r.Remote.Branch)
 	return cmd.Run()
@@ -149,7 +153,10 @@ func (r *Git) writeConfig() (err error) {
 			path)
 		return
 	}
-
+	insecure, err := addon.Setting.Bool("git.insecure.enabled")
+	if err != nil {
+		return
+	}
 	proxy, err := r.proxy()
 	if err != nil {
 		return
@@ -160,7 +167,7 @@ func (r *Git) writeConfig() (err error) {
 	s += "[credential]\n"
 	s += "helper = store\n"
 	s += "[http]\n"
-	s += fmt.Sprintf("sslVerify = %t\n", !r.Insecure)
+	s += fmt.Sprintf("sslVerify = %t\n", !insecure)
 	if proxy != "" {
 		s += fmt.Sprintf("proxy = %s\n", proxy)
 	}
@@ -286,7 +293,7 @@ func (r *Git) checkout() (err error) {
 		_ = os.Chdir(dir)
 	}()
 	_ = os.Chdir(r.Path)
-	cmd := command.New("/usr/bin/git")
+	cmd := command.Command{Path: "/usr/bin/git"}
 	cmd.Options.Add("checkout", branch)
 	err = cmd.Run()
 	return
