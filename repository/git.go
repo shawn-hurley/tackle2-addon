@@ -47,10 +47,10 @@ func (r *Git) Validate() (err error) {
 func (r *Git) Fetch() (err error) {
 	url := r.URL()
 	addon.Activity("[GIT] Cloning: %s", url.String())
-	err = nas.RmDir(r.Path)
-	if err != nil {
-		return err
-	}
+	//err = nas.RmDir(r.Path)
+	//if err != nil {
+	//	return err
+	//}
 	id, found, err := r.findIdentity("source")
 	if err != nil {
 		return
@@ -77,7 +77,7 @@ func (r *Git) Fetch() (err error) {
 		return
 	}
 	cmd := command.Command{Path: "/usr/bin/git"}
-	cmd.Options.Add("clone", url.String(), r.Path)
+	cmd.Options.Add("clone", "--depth=1", url.String(), r.Path)
 	file, err := os.Stat(r.Path)
 	addon.Activity("checking for filepath existance before cloning", file, err)
 	if err == nil {
@@ -86,7 +86,7 @@ func (r *Git) Fetch() (err error) {
 		if err != nil {
 			return err
 		}
-	}
+	} else os.IsNotExist()
 	err = cmd.Run()
 	if err != nil {
 		cmd := exec.Command("ls", "-laR", r.Path)
