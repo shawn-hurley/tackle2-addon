@@ -5,6 +5,7 @@ import (
 	"fmt"
 	urllib "net/url"
 	"os"
+	"os/exec"
 	pathlib "path"
 	"strings"
 
@@ -88,8 +89,10 @@ func (r *Git) Fetch() (err error) {
 	}
 	err = cmd.Run()
 	if err != nil {
-		addon.Activity("unable to clone repo", string(cmd.Output()))
-		return
+		cmd := exec.Command("ls", "-laR", r.Path)
+		b, err := cmd.Output()
+		addon.Activity("this is a thing err - %v\n%s", err, string(b))
+		return err
 	}
 	err = r.checkout()
 	return
