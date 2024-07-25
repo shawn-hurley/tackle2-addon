@@ -77,7 +77,10 @@ func (r *Git) Fetch() (err error) {
 	}
 	cmd := command.Command{Path: "/usr/bin/git"}
 	cmd.Options.Add("clone", url.String(), r.Path)
-	if _, err := os.Stat(r.Path); err == nil {
+	file, err := os.Stat(r.Path)
+	addon.Activity("checking for filepath existance before cloning", file, err)
+	if err == nil {
+		addon.Activity("removing filepath before cloning", file)
 		err = os.RemoveAll(r.Path)
 		if err != nil {
 			return err
@@ -85,7 +88,7 @@ func (r *Git) Fetch() (err error) {
 	}
 	err = cmd.Run()
 	if err != nil {
-		fmt.Printf("invalid cmd run: %v", string(cmd.Output()))
+		addon.Activity("unable to clone repo", string(cmd.Output()))
 		return
 	}
 	err = r.checkout()
