@@ -86,11 +86,14 @@ func (r *Git) Fetch() (err error) {
 		if err != nil {
 			return err
 		}
-	} else os.IsNotExist()
+	}
 	err = cmd.Run()
 	if err != nil {
 		cmd := exec.Command("ls", "-laR", r.Path)
 		b, err := cmd.Output()
+		addon.Activity("this is a thing err - %v\n%s", err, string(b))
+		cmd = exec.Command("df", "-h")
+		b, err = cmd.Output()
 		addon.Activity("this is a thing err - %v\n%s", err, string(b))
 		return err
 	}
